@@ -9,7 +9,7 @@ plugins {
 
 group = "io.github.hsyyid"
 archivesBaseName = "EssentialCmds"
-version = '6.9'
+version = '7.4d'
 
 apply plugin: 'net.ellune.blossom'
 
@@ -31,10 +31,14 @@ repositories {
         name 'Sponge maven repo'
         url 'http://repo.spongepowered.org/maven'
     }
+    maven {
+    	url 'https://jitpack.io'
+    }
 }
 
 dependencies {
     compile "org.spongepowered:spongeapi:3.0.0"
+    compile "com.github.Flibio:Updatifier:v1.0.0"
 }
 
 test {
@@ -86,5 +90,6 @@ def getGitHash() {
 }
 
 blossom {
-    replaceToken '@project.version@', project.version + getGitHash(), 'src/main/java/io/github/hsyyid/essentialcmds/PluginInfo.java'
+    replaceToken '@project.version@', project.version, 'src/main/java/io/github/hsyyid/essentialcmds/PluginInfo.java'
+    replaceToken '@project.informativeVersion@', project.version + getGitHash(), 'src/main/java/io/github/hsyyid/essentialcmds/PluginInfo.java'
 }

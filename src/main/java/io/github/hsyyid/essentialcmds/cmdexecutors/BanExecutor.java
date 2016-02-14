@@ -38,6 +38,7 @@ import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.ban.BanService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.serializer.TextSerializers;
 import org.spongepowered.api.util.ban.Ban;
 import org.spongepowered.api.util.ban.BanTypes;
 
@@ -52,18 +53,21 @@ public class BanExecutor extends CommandExecutorBase
 		String reason = ctx.<String> getOne("reason").orElse("The BanHammer has spoken!");
 
 		BanService srv = game.getServiceManager().provide(BanService.class).get();
-		
+
 		if (srv.isBanned(player.getProfile()))
 		{
 			src.sendMessage(Text.of(TextColors.RED, "That player has already been banned."));
 			return CommandResult.empty();
 		}
-
-		srv.addBan(Ban.builder().type(BanTypes.PROFILE).source(src).profile(player.getProfile()).reason(Text.of(reason)).build());
 		
+		srv.addBan(Ban.builder().type(BanTypes.PROFILE).source(src).profile(player.getProfile()).reason(TextSerializers.formattingCode('&').deserialize(reason)).build());
+
 		if (player.isOnline())
 		{
-			player.getPlayer().get().kick(Text.of(TextColors.RED, "You have been banned for: " + reason));
+			player.getPlayer().get().kick(Text.builder()
+				.append(Text.of(TextColors.DARK_RED, "You have been banned!\n ", TextColors.RED, "Reason: "))
+				.append(TextSerializers.formattingCode('&').deserialize(reason))
+				.build());
 		}
 
 		src.sendMessage(Text.of(TextColors.GREEN, "Success! ", TextColors.YELLOW, player.getName() + " has been banned."));
@@ -72,20 +76,20 @@ public class BanExecutor extends CommandExecutorBase
 
 	@Nonnull
 	@Override
-	public String[] getAliases() {
+	public String[] getAliases()
+	{
 		return new String[] { "ban" };
 	}
 
 	@Nonnull
 	@Override
-	public CommandSpec getSpec() {
+	public CommandSpec getSpec()
+	{
 		return CommandSpec
-				.builder()
-				.description(Text.of("Ban Command"))
-				.permission("essentialcmds.ban.use")
-				.arguments(
-						GenericArguments.seq(GenericArguments.onlyOne(new UserParser(Text.of("player"))), GenericArguments
-								.optional(GenericArguments.onlyOne(GenericArguments.remainingJoinedStrings(Text.of("reason"))))))
-				.executor(this).build();
+			.builder()
+			.description(Text.of("Ban Command"))
+			.permission("essentialcmds.ban.use")
+			.arguments(GenericArguments.seq(GenericArguments.onlyOne(new UserParser(Text.of("player"))), GenericArguments.optional(GenericArguments.onlyOne(GenericArguments.remainingJoinedStrings(Text.of("reason"))))))
+			.executor(this).build();
 	}
 }

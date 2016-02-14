@@ -24,84 +24,65 @@
  */
 package io.github.hsyyid.essentialcmds.cmdexecutors;
 
+import com.google.common.collect.Lists;
 import io.github.hsyyid.essentialcmds.internal.AsyncCommandExecutorBase;
 import io.github.hsyyid.essentialcmds.utils.Mail;
-import io.github.hsyyid.essentialcmds.utils.PaginatedList;
 import io.github.hsyyid.essentialcmds.utils.Utils;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
-import org.spongepowered.api.command.args.GenericArguments;
-import org.spongepowered.api.command.source.CommandBlockSource;
-import org.spongepowered.api.command.source.ConsoleSource;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.service.pagination.PaginationBuilder;
+import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Optional;
+import java.util.List;
 import java.util.stream.Collectors;
 
-public class MailListExecutor extends AsyncCommandExecutorBase {
+import javax.annotation.Nonnull;
+
+public class MailListExecutor extends AsyncCommandExecutorBase
+{
 	@Override
 	public void executeAsync(CommandSource src, CommandContext ctx)
 	{
-		if(src instanceof Player)
+		if (src instanceof Player)
 		{
 			Player player = (Player) src;
 			ArrayList<Mail> mail = Utils.getMail();
-
 			ArrayList<Mail> myMail = (ArrayList<Mail>) mail.stream().filter(m -> m.getRecipientName().equals(player.getName())).collect(Collectors.toList());
-
-			if(myMail.isEmpty())
+			
+			if (myMail.isEmpty())
 			{
 				player.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You have no new mail!"));
 				return;
 			}
 
-			Optional<Integer> arguments = ctx.<Integer>getOne("page no");
-			int pgNo;
+			PaginationService paginationService = Sponge.getServiceManager().provide(PaginationService.class).get();
+			List<Text> mailText = Lists.newArrayList();
 
-			if (arguments.isPresent())
-			{
-				pgNo = arguments.get();
-			} else
-			{
-				pgNo = 1;
-			}
-
-			//Add List
-			PaginatedList pList = new PaginatedList("/listmail");
 			for (Mail newM : myMail)
 			{
 				String name = "New mail from " + newM.getSenderName();
-
 				Text item = Text.builder(name)
-						.onClick(TextActions.runCommand("/readmail " + (myMail.indexOf(newM))))
-						.onHover(TextActions.showText(Text.of(TextColors.WHITE, "Read mail from ", TextColors.GOLD, newM.getSenderName())))
-						.color(TextColors.DARK_AQUA)
-						.style(TextStyles.UNDERLINE)
-						.build();
+					.onClick(TextActions.runCommand("/readmail " + (myMail.indexOf(newM))))
+					.onHover(TextActions.showText(Text.of(TextColors.WHITE, "Read mail from ", TextColors.GOLD, newM.getSenderName())))
+					.color(TextColors.DARK_AQUA)
+					.style(TextStyles.UNDERLINE)
+					.build();
 
-				pList.add(item);
+				mailText.add(item);
 			}
-			pList.setItemsPerPage(10);
-			//Header
-			Text.Builder header = Text.builder();
-			header.append(Text.of(TextColors.GREEN, "------------"));
-			header.append(Text.of(TextColors.GREEN, " Showing Mail page " + pgNo + " of " + pList.getTotalPages() + " "));
-			header.append(Text.of(TextColors.GREEN, "------------"));
 
-			pList.setHeader(header.build());
-			//Send List
-			src.sendMessage(pList.getPage(pgNo));
-		} else if(src instanceof ConsoleSource)
-		{
-			src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Must be an in-game player to use /maillist!"));
-		} else if(src instanceof CommandBlockSource)
+			PaginationBuilder paginationBuilder = paginationService.builder().contents(mailText).title(Text.of(TextColors.GREEN, "Showing Mail")).paddingString("-");
+			paginationBuilder.sendTo(src);
+		}
+		else
 		{
 			src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Must be an in-game player to use /mailist!"));
 		}
@@ -109,15 +90,19 @@ public class MailListExecutor extends AsyncCommandExecutorBase {
 
 	@Nonnull
 	@Override
-	public String[] getAliases() {
+	public String[] getAliases()
+	{
 		return new String[] { "listmail" };
 	}
 
 	@Nonnull
 	@Override
-	public CommandSpec getSpec() {
-		return CommandSpec.builder().description(Text.of("List Mail Command")).permission("essentialcmds.mail.list")
-			.arguments(GenericArguments.optional(GenericArguments.onlyOne(GenericArguments.integer(Text.of("page no")))))
-			.executor(this).build();
+	public CommandSpec getSpec()
+	{
+		return CommandSpec.builder()
+			.description(Text.of("List Mail Command"))
+			.permission("essentialcmds.mail.list")
+			.executor(this)
+			.build();
 	}
 }

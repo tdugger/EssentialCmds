@@ -40,9 +40,10 @@ import org.spongepowered.api.text.channel.MessageChannel;
 import org.spongepowered.api.text.channel.MutableMessageChannel;
 import org.spongepowered.api.text.format.TextColors;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nonnull;
 
 public class MessageExecutor extends AsyncCommandExecutorBase
 {
@@ -65,6 +66,13 @@ public class MessageExecutor extends AsyncCommandExecutorBase
 		if (src instanceof Player)
 		{
 			Player player = (Player) src;
+
+			if (EssentialCmds.muteList.contains(player.getUniqueId()))
+			{
+				player.sendMessage(Text.of(TextColors.RED, "You have been muted."));
+				return;
+			}
+
 			src.sendMessage(Text.of(TextColors.GOLD, "[", TextColors.RED, player.getName(), TextColors.GOLD, " > ", TextColors.RED, recipient.getName(), TextColors.GOLD, "]: ", TextColors.GRAY, message));
 			recipient.sendMessage(Text.of(TextColors.GOLD, "[", TextColors.RED, player.getName(), TextColors.GOLD, " > ", TextColors.RED, recipient.getName(), TextColors.GOLD, "]: ", TextColors.GRAY, message));
 
@@ -104,19 +112,20 @@ public class MessageExecutor extends AsyncCommandExecutorBase
 
 	@Nonnull
 	@Override
-	public String[] getAliases() {
+	public String[] getAliases()
+	{
 		return new String[] { "message", "m", "msg", "tell" };
 	}
 
 	@Nonnull
 	@Override
-	public CommandSpec getSpec() {
+	public CommandSpec getSpec()
+	{
 		return CommandSpec
 			.builder()
 			.description(Text.of("Message Command"))
 			.permission("essentialcmds.message.use")
-			.arguments(GenericArguments.seq(GenericArguments.onlyOne(GenericArguments.player(Text.of("recipient")))),
-					GenericArguments.onlyOne(GenericArguments.remainingJoinedStrings(Text.of("message"))))
+			.arguments(GenericArguments.seq(GenericArguments.onlyOne(GenericArguments.player(Text.of("recipient")))), GenericArguments.onlyOne(GenericArguments.remainingJoinedStrings(Text.of("message"))))
 			.executor(new MessageExecutor()).build();
 	}
 }

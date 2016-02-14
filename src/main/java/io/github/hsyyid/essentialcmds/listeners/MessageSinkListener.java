@@ -27,6 +27,7 @@ package io.github.hsyyid.essentialcmds.listeners;
 import io.github.hsyyid.essentialcmds.EssentialCmds;
 import io.github.hsyyid.essentialcmds.utils.AFK;
 import io.github.hsyyid.essentialcmds.utils.Utils;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
@@ -35,16 +36,16 @@ import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.option.OptionSubject;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.action.TextActions;
+import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.UUID;
 
 public class MessageSinkListener
 {
-	@Listener(order=Order.PRE)
+	@Listener(order = Order.PRE)
 	public void onMessage(MessageChannelEvent.Chat event)
 	{
 		if (event.getCause().first(Player.class).isPresent())
@@ -70,7 +71,6 @@ public class MessageSinkListener
 					try
 					{
 						Text newMessage = Text.builder().append(event.getMessage().orElse(Text.of())).onClick(TextActions.openUrl(new URL(foundLink))).build();
-
 						event.setMessage(newMessage);
 					}
 					catch (MalformedURLException e)
@@ -106,7 +106,6 @@ public class MessageSinkListener
 				try
 				{
 					Text newMessage = Text.builder().append(event.getMessage().orElse(Text.of())).onClick(TextActions.openUrl(new URL(foundLink))).build();
-
 					event.setMessage(newMessage);
 				}
 				catch (MalformedURLException e)
@@ -169,14 +168,11 @@ public class MessageSinkListener
 				EssentialCmds.afkList.add(afk);
 			}
 
-			for (UUID mutedUUID : EssentialCmds.muteList)
+			if (EssentialCmds.muteList.contains(player.getUniqueId()))
 			{
-				if (mutedUUID.equals(player.getUniqueId()))
-				{
-					player.sendMessage(Text.of(TextColors.RED, "You have been muted."));
-					event.setCancelled(true);
-					return;
-				}
+				player.sendMessage(Text.of(TextColors.RED, "You have been muted."));
+				event.setCancelled(true);
+				return;
 			}
 
 			String original = event.getMessage().orElse(Text.of()).toPlain();
@@ -184,36 +180,38 @@ public class MessageSinkListener
 			Subject subject = player.getContainingCollection().get(player.getIdentifier());
 			String prefix = "";
 			String suffix = "";
-			
+			TextColor nameColor = TextColors.WHITE;
+
 			if (subject instanceof OptionSubject)
 			{
 				OptionSubject optionSubject = (OptionSubject) subject;
 
 				prefix = optionSubject.getOption("prefix").orElse("");
 				suffix = optionSubject.getOption("suffix").orElse("");
+				nameColor = Sponge.getRegistry().getType(TextColor.class, optionSubject.getOption("namecolor").orElse("")).orElse(TextColors.WHITE);
 			}
-			
+
 			String nick = Utils.getNick(player);
 
 			original = original.replaceFirst("<", ("<" + prefix));
 			String prefixInOriginal = original.substring(0, prefix.length() + 1);
 
-			original = original.replaceFirst(">", (suffix + ">"));
-			String suffixInOriginal = original.substring(original.indexOf(player.getName()) + player.getName().length(), original.indexOf(">"));
-			
 			original = original.replaceFirst(player.getName(), nick);
 			String playerName = original.substring(prefixInOriginal.length(), original.indexOf(nick) + nick.length());
-			
-			String restOfOriginal = original.substring(original.indexOf(">"), original.length());
-			
+
+			String restOfOriginal = original.substring(original.indexOf(">") + 1, original.length());
+
+			original = original.replaceFirst(">", (suffix + ">"));
+			String suffixInOriginal = original.substring(original.indexOf(nick) + nick.length(), original.indexOf(restOfOriginal));
+
 			prefixInOriginal = prefixInOriginal.replaceFirst("<", Utils.getFirstChatCharReplacement());
-			restOfOriginal = restOfOriginal.replaceFirst(">", Utils.getLastChatCharReplacement());
-			
-			if (!(player.hasPermission("essentialcmds.color.chat.use")))
+			suffixInOriginal = suffixInOriginal.substring(0, suffixInOriginal.lastIndexOf(">")) + Utils.getLastChatCharReplacement();
+
+			if (!player.hasPermission("essentialcmds.color.chat.use"))
 			{
 				event.setMessage(Text.builder()
 					.append(TextSerializers.formattingCode('&').deserialize(prefixInOriginal))
-					.append(TextSerializers.formattingCode('&').deserialize(playerName))
+					.append(Text.builder().append(TextSerializers.formattingCode('&').deserialize(playerName)).color(nameColor).build())
 					.append(TextSerializers.formattingCode('&').deserialize(suffixInOriginal))
 					.append(Text.of(TextColors.RESET))
 					.append(Text.of(restOfOriginal))
@@ -226,7 +224,7 @@ public class MessageSinkListener
 			{
 				event.setMessage(Text.builder()
 					.append(TextSerializers.formattingCode('&').deserialize(prefixInOriginal))
-					.append(TextSerializers.formattingCode('&').deserialize(playerName))
+					.append(Text.builder().append(TextSerializers.formattingCode('&').deserialize(playerName)).color(nameColor).build())
 					.append(TextSerializers.formattingCode('&').deserialize(suffixInOriginal))
 					.append(Text.of(TextColors.RESET))
 					.append(TextSerializers.formattingCode('&').deserialize(restOfOriginal))

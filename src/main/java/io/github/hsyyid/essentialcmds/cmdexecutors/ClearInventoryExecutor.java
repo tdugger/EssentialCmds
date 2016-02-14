@@ -30,46 +30,44 @@ import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
-import org.spongepowered.api.command.source.CommandBlockSource;
-import org.spongepowered.api.command.source.ConsoleSource;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
-import javax.annotation.Nonnull;
 import java.util.Optional;
 
-public class GetPosExecutor extends CommandExecutorBase
+import javax.annotation.Nonnull;
+
+public class ClearInventoryExecutor extends CommandExecutorBase
 {
 	public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException
 	{
-		Optional<Player> optionalPlayer = ctx.<Player> getOne("player");
+		Optional<Player> target = ctx.<Player> getOne("target");
 
-		if (!optionalPlayer.isPresent())
+		if (!target.isPresent())
 		{
 			if (src instanceof Player)
 			{
 				Player player = (Player) src;
-				player.sendMessage(Text.of(TextColors.GOLD, "Your current position is: ", TextColors.GRAY, player.getLocation().getX() + ", " + player.getLocation().getY() + ", " + player.getLocation().getZ()));
+				player.getInventory().clear();
+				src.sendMessage(Text.of(TextColors.GREEN, "Success! ", TextColors.YELLOW, "Cleared inventory."));
 			}
-			else if (src instanceof ConsoleSource)
+			else
 			{
-				src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Must be an in-game player to use /getpos!"));
-			}
-			else if (src instanceof CommandBlockSource)
-			{
-				src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Must be an in-game player to use /getpos!"));
+				src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You are not an in-game player!"));
 			}
 		}
-		else if (src.hasPermission("essentialscmds.getpos.others"))
+		else if (src.hasPermission("essentialcmds.clearinventory.others"))
 		{
-			Player player = optionalPlayer.get();
-			src.sendMessage(Text.of(TextColors.GOLD, player.getName() + "'s current position is: ", TextColors.GRAY, player.getLocation().getX() + ", " + player.getLocation().getY() + ", " + player.getLocation().getZ()));
+			Player player = target.get();
+			player.getInventory().clear();
+			src.sendMessage(Text.of(TextColors.GREEN, "Success! ", TextColors.YELLOW, "Cleared players inventory."));
+			player.sendMessage(Text.of(TextColors.GOLD, "Your inventory was cleared by ", TextColors.GRAY, src.getName()));
 		}
 		else
 		{
-			src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You don't have permission to get the positon of others!"));
+			src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You do not have permission to clear the inventory of other players."));
 		}
 
 		return CommandResult.success();
@@ -79,7 +77,7 @@ public class GetPosExecutor extends CommandExecutorBase
 	@Override
 	public String[] getAliases()
 	{
-		return new String[] { "getpos" };
+		return new String[] { "clear", "clearinventory", "ci", "clearinv", "emptyinv" };
 	}
 
 	@Nonnull
@@ -87,10 +85,10 @@ public class GetPosExecutor extends CommandExecutorBase
 	public CommandSpec getSpec()
 	{
 		return CommandSpec.builder()
-			.description(Text.of("GetPos Command"))
-			.permission("essentialcmds.getpos.use")
-			.arguments(GenericArguments.optional(
-				GenericArguments.onlyOne(GenericArguments.player(Text.of("player")))))
-			.executor(this).build();
+			.description(Text.of("ClearInventory Command"))
+			.permission("essentialcmds.clearinventory.use")
+			.arguments(GenericArguments.optional(GenericArguments.onlyOne(GenericArguments.player(Text.of("target")))))
+			.executor(this)
+			.build();
 	}
 }

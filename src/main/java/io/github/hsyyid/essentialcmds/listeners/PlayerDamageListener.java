@@ -22,36 +22,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.github.hsyyid.essentialcmds.utils;
+package io.github.hsyyid.essentialcmds.listeners;
 
-public class PaginatedListUtil
+import io.github.hsyyid.essentialcmds.EssentialCmds;
+import io.github.hsyyid.essentialcmds.utils.Utils;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.entity.DamageEntityEvent;
+import org.spongepowered.api.event.filter.cause.First;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
+
+public class PlayerDamageListener
 {
-
-	// Line number presets
-	public static final int BEST_FIT_WITH_HEADER = 7;
-	public static final int BEST_FIT_WITH_FOOTER = 7;
-	public static final int BEST_FIT_NO_HEADER_OR_FOOTER = 8;
-	public static final int BEST_FIT_WITH_HEADER_AND_FOOTER = 6;
-
-	// Line number styles
-	public static final String LINE_NUMBER_TYPE_DASH = " - ";
-	public static final String LINE_NUMBER_TYPE_PARENTHESIS = ") ";
-	public static final String LINE_NUMBER_TYPE_PERIOD = ". ";
-
-	// Pagination styles
-	public static final char PAGINATION_TYPE_DASH = '-';
-	public static final char PAGINATION_TYPE_UNDERSCORE = '_';
-	public static final char PAGINATION_TYPE_TILDA = '~';
-	public static final char PAGINATION_TYPE_STAR = '*';
-	public static final char PAGINATION_TYPE_HASH = '#';
-	public static final char PAGINATION_TYPE_DOUBLELINE = '=';
-	public static final char PAGINATION_TYPE_PLUS = '+';
-	public static final char PAGINATION_TYPE_NONE = ' ';
-
-	// Pagination links
-	public static final String PAGINATION_FIRST = "<<";
-	public static final String PAGINATION_BACK = "<";
-	public static final String PAGINATION_NEXT = ">";
-	public static final String PAGINATION_LAST = ">>";
-
+	@Listener
+	public void onPlayerDamaged(DamageEntityEvent event, @First Player player)
+	{
+		if (Utils.isTeleportCooldownEnabled() && EssentialCmds.teleportingPlayers.contains(player.getUniqueId()))
+		{
+			EssentialCmds.teleportingPlayers.remove(player.getUniqueId());
+			player.sendMessage(Text.of(TextColors.RED, "Teleportation canceled due to damage."));
+		}
+	}
 }

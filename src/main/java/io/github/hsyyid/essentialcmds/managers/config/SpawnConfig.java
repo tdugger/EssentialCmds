@@ -36,23 +36,23 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Handles the config.conf file
+ * Handles the spawn.conf file
  */
-public class Config implements Configurable
+public class SpawnConfig implements Configurable
 {
-	private static Config config = new Config();
+	private static SpawnConfig config = new SpawnConfig();
 
-	private Config()
+	private SpawnConfig()
 	{
 		;
 	}
 
-	public static Config getConfig()
+	public static SpawnConfig getConfig()
 	{
 		return config;
 	}
 
-	private Path configFile = Paths.get(EssentialCmds.getEssentialCmds().getConfigDir() + "/config.conf");
+	private Path configFile = Paths.get(EssentialCmds.getEssentialCmds().getConfigDir().resolve("data") + "/spawn.conf");
 	private ConfigurationLoader<CommentedConfigurationNode> configLoader = HoconConfigurationLoader.builder().setPath(configFile).build();
 	private CommentedConfigurationNode configNode;
 
@@ -108,24 +108,7 @@ public class Config implements Configurable
 	@Override
 	public void populate()
 	{
-		get().getNode("afk", "timer").setValue(30000).setComment("The length of time in millisec until a player is AFK.");
-		get().getNode("afk", "kick", "use").setValue(false).setComment("When enabled, it enables the kicking of players who are AFK.");
-		get().getNode("afk", "kick", "timer").setValue(30000).setComment("Sets the amount of time until a player is kicked for being AFK.");
-		get().getNode("message", "firstjoin").setValue("&4Welcome &a@p &4to the server!").setComment("Message when a player first joins the server.");
-		get().getNode("message", "join").setValue("&4Welcome!").setComment("Message sent to a player when they join the server.");
-		get().getNode("message", "login").setValue("").setComment("Message sent to everyone when a player joins.");
-		get().getNode("message", "disconnect").setValue("").setComment("Message sent to everyone when a player disconnects.");
-		get().getNode("mysql").setComment("MySQL Options for EssentialCmds.");
-		get().getNode("mysql", "use").setValue(false).setComment("Enables/Disables MySQL usage for EssentialCmds.");
-		get().getNode("mysql", "port").setValue("8080").setComment("Port of MySQL Database.");
-		get().getNode("mysql", "host").setValue("localhost").setComment("Address of MySQL Database.");
-		get().getNode("mysql", "database").setValue("EssentialCmds").setComment("Name of MySQL Database.");
-		get().getNode("mysql", "username").setValue("root").setComment("Username for MySQL Database.");
-		get().getNode("mysql", "password").setValue("pass").setComment("Password for MySQL Database.");
-		get().getNode("chat", "firstcharacter").setValue("<").setComment("When set, changes the first character in chat from '<'.");
-		get().getNode("chat", "lastcharacter").setValue(">").setComment("When set, changes the character after the player name from '>'.");
-		get().getNode("teleport", "cooldown", "enabled").setValue(false).setComment("Toggles the cooldown option for teleports.");
-		get().getNode("teleport", "cooldown", "timer").setValue(10).setComment("The length of time in seconds until a player teleports.");
+		get().getNode("spawn").setComment("Contains spawn data.");
 	}
 
 	@Override

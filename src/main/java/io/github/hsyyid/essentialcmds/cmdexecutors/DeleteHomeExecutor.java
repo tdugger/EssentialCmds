@@ -24,12 +24,8 @@
  */
 package io.github.hsyyid.essentialcmds.cmdexecutors;
 
-import io.github.hsyyid.essentialcmds.api.util.config.Configs;
-import io.github.hsyyid.essentialcmds.api.util.config.Configurable;
 import io.github.hsyyid.essentialcmds.internal.AsyncCommandExecutorBase;
-import io.github.hsyyid.essentialcmds.managers.config.Config;
 import io.github.hsyyid.essentialcmds.utils.Utils;
-import ninja.leaping.configurate.ConfigurationNode;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
@@ -43,25 +39,17 @@ import javax.annotation.Nonnull;
 public class DeleteHomeExecutor extends AsyncCommandExecutorBase
 {
 	@Override
-	public void executeAsync(CommandSource src, CommandContext ctx) {
+	public void executeAsync(CommandSource src, CommandContext ctx)
+	{
 		String homeName = ctx.<String> getOne("home name").get();
-		Configurable config = Config.getConfig();
 
 		if (src instanceof Player)
 		{
 			Player player = (Player) src;
-			
-			if (Utils.inConfig(player.getUniqueId(), homeName))
+
+			if (Utils.isHomeInConfig(player.getUniqueId(), homeName))
 			{
-				ConfigurationNode homeNode = Configs.getConfig(config).getNode("home", "users", player.getUniqueId().toString(), "homes");
-
-				// Get Value of Home Node
-				String homes = homeNode.getString();
-				String newVal = homes.replace(homeName + ",", "");
-
-				Configs.setValue(config, homeNode.getPath(), newVal);
-				Configs.removeChild(config, new Object[] { "home", "users", player.getUniqueId().toString() }, homeName);
-
+				Utils.deleteHome(player, homeName);
 				src.sendMessage(Text.of(TextColors.GREEN, "Success: ", TextColors.YELLOW, "Deleted home " + homeName));
 			}
 			else
@@ -77,15 +65,15 @@ public class DeleteHomeExecutor extends AsyncCommandExecutorBase
 
 	@Nonnull
 	@Override
-	public String[] getAliases() {
+	public String[] getAliases()
+	{
 		return new String[] { "deletehome", "delhome" };
 	}
 
 	@Nonnull
 	@Override
-	public CommandSpec getSpec() {
-		return CommandSpec.builder().description(Text.of("Delete Home Command")).permission("essentialcmds.home.delete")
-			.arguments(GenericArguments.onlyOne(GenericArguments.string(Text.of("home name")))).executor(this)
-			.build();
+	public CommandSpec getSpec()
+	{
+		return CommandSpec.builder().description(Text.of("Delete Home Command")).permission("essentialcmds.home.delete").arguments(GenericArguments.onlyOne(GenericArguments.string(Text.of("home name")))).executor(this).build();
 	}
 }

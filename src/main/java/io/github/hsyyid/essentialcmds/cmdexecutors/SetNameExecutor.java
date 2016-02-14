@@ -30,46 +30,51 @@ import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
-import org.spongepowered.api.command.source.CommandBlockSource;
-import org.spongepowered.api.command.source.ConsoleSource;
 import org.spongepowered.api.command.spec.CommandSpec;
+import org.spongepowered.api.data.DataTransactionResult;
+import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import javax.annotation.Nonnull;
-import java.util.Optional;
 
-public class GetPosExecutor extends CommandExecutorBase
+public class SetNameExecutor extends CommandExecutorBase
 {
 	public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException
 	{
-		Optional<Player> optionalPlayer = ctx.<Player> getOne("player");
+		String name = ctx.<String> getOne("name").get();
 
-		if (!optionalPlayer.isPresent())
+		if (src instanceof Player)
 		{
-			if (src instanceof Player)
+			Player player = (Player) src;
+
+			if (player.getItemInHand().isPresent())
 			{
-				Player player = (Player) src;
-				player.sendMessage(Text.of(TextColors.GOLD, "Your current position is: ", TextColors.GRAY, player.getLocation().getX() + ", " + player.getLocation().getY() + ", " + player.getLocation().getZ()));
+				ItemStack stack = player.getItemInHand().get();
+				Text textName = TextSerializers.FORMATTING_CODE.deserialize(name);
+				DataTransactionResult dataTransactionResult = stack.offer(Keys.DISPLAY_NAME, textName);
+				
+				if(dataTransactionResult.isSuccessful())
+				{
+					player.setItemInHand(stack);
+					src.sendMessage(Text.of(TextColors.GREEN, "Success! ", TextColors.YELLOW, "Set name on item."));
+				}
+				else
+				{
+					src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Could not set name on item."));
+				}
 			}
-			else if (src instanceof ConsoleSource)
+			else
 			{
-				src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Must be an in-game player to use /getpos!"));
+				src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You must be holding an item!"));
 			}
-			else if (src instanceof CommandBlockSource)
-			{
-				src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Must be an in-game player to use /getpos!"));
-			}
-		}
-		else if (src.hasPermission("essentialscmds.getpos.others"))
-		{
-			Player player = optionalPlayer.get();
-			src.sendMessage(Text.of(TextColors.GOLD, player.getName() + "'s current position is: ", TextColors.GRAY, player.getLocation().getX() + ", " + player.getLocation().getY() + ", " + player.getLocation().getZ()));
 		}
 		else
 		{
-			src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You don't have permission to get the positon of others!"));
+			src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You must be a player to name items."));
 		}
 
 		return CommandResult.success();
@@ -79,7 +84,7 @@ public class GetPosExecutor extends CommandExecutorBase
 	@Override
 	public String[] getAliases()
 	{
-		return new String[] { "getpos" };
+		return new String[] { "setitemname", "setname" };
 	}
 
 	@Nonnull
@@ -87,10 +92,10 @@ public class GetPosExecutor extends CommandExecutorBase
 	public CommandSpec getSpec()
 	{
 		return CommandSpec.builder()
-			.description(Text.of("GetPos Command"))
-			.permission("essentialcmds.getpos.use")
-			.arguments(GenericArguments.optional(
-				GenericArguments.onlyOne(GenericArguments.player(Text.of("player")))))
-			.executor(this).build();
+			.description(Text.of("SetName Command"))
+			.permission("essentialcmds.setname.use")
+			.arguments(GenericArguments.onlyOne(GenericArguments.remainingJoinedStrings(Text.of("name"))))
+			.executor(this)
+			.build();
 	}
 }

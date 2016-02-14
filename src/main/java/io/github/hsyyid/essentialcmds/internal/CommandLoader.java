@@ -48,6 +48,7 @@ public final class CommandLoader {
             new AFKExecutor(),
             new AsConsoleExecutor(),
             new BackExecutor(),
+            new BanExecutor(),
             new BlacklistBase(),
             new BlockInfoExecutor(),
             new BroadcastExecutor(),
@@ -69,6 +70,7 @@ public final class CommandLoader {
             new GetPosExecutor(),
             new HatExecutor(),
             new HomeExecutor(),
+            new HealExecutor(),
             new IgniteExecutor(),
             new InvSeeExecutor(),
             new ItemInfoExecutor(),
@@ -129,7 +131,15 @@ public final class CommandLoader {
             new JailExecutor(),
             new UnJailExecutor(),
             new VanishExecutor(),
-            new KickAllExecutor()
+            new KickAllExecutor(),
+            new WorldInfoExecutor(),
+            new SlapExecutor(),
+            new RocketExecutor(),
+            new ClearInventoryExecutor(),
+            new TempBanExecutor(),
+            new SetNameExecutor(),
+            new LoreBase(),
+            new HelpOpExecutor()
         );
     }
 

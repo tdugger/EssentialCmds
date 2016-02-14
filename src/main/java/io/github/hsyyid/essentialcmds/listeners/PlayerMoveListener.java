@@ -25,80 +25,81 @@
 package io.github.hsyyid.essentialcmds.listeners;
 
 import io.github.hsyyid.essentialcmds.utils.AFK;
-
+import io.github.hsyyid.essentialcmds.utils.Utils;
 import io.github.hsyyid.essentialcmds.EssentialCmds;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.DisplaceEntityEvent;
+import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
 public class PlayerMoveListener
 {
 	@Listener
-	public void onPlayerMove(DisplaceEntityEvent event)
+	public void onPlayerMove(DisplaceEntityEvent event, @First Player player)
 	{
-		if (event.getTargetEntity() instanceof Player)
+		if (Utils.isTeleportCooldownEnabled() && EssentialCmds.teleportingPlayers.contains(player.getUniqueId()))
 		{
-			Player player = (Player) event.getTargetEntity();
+			EssentialCmds.teleportingPlayers.remove(player.getUniqueId());
+			player.sendMessage(Text.of(TextColors.RED, "Teleportation canceled due to movement."));
+		}
+		
+		if (EssentialCmds.frozenPlayers.contains(player.getUniqueId()))
+		{
+			player.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You cannot move while frozen."));
+			event.setCancelled(true);
+			return;
+		}
 
-			if (EssentialCmds.frozenPlayers.contains(player.getUniqueId()))
+		if (EssentialCmds.recentlyJoined.contains(player))
+		{
+			EssentialCmds.recentlyJoined.remove(player);
+
+			AFK removeAFK = null;
+
+			for (AFK a : EssentialCmds.afkList)
 			{
-				player.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You cannot move while frozen."));
-				event.setCancelled(true);
-				return;
+				if (player.getUniqueId().equals(a.getPlayer().getUniqueId()))
+				{
+					removeAFK = a;
+					break;
+				}
 			}
 
-			if (EssentialCmds.recentlyJoined.contains(player))
+			if (removeAFK != null)
 			{
-				EssentialCmds.recentlyJoined.remove(player);
-				
-				AFK removeAFK = null;
-
-				for (AFK a : EssentialCmds.afkList)
-				{
-					if (player.getUniqueId().equals(a.getPlayer().getUniqueId()))
-					{
-						removeAFK = a;
-						break;
-					}
-				}
-
-				if (removeAFK != null)
-				{
-					EssentialCmds.afkList.remove(removeAFK);
-				}
-			}
-			else
-			{
-				AFK removeAFK = null;
-
-				for (AFK a : EssentialCmds.afkList)
-				{
-					if (player.getUniqueId().equals(a.getPlayer().getUniqueId()))
-					{
-						removeAFK = a;
-						break;
-					}
-				}
-
-				if (removeAFK != null)
-				{
-					if (removeAFK.getAFK())
-					{
-						for (Player p : EssentialCmds.getEssentialCmds().getGame().getServer().getOnlinePlayers())
-						{
-							p.sendMessage(Text.of(TextColors.BLUE, player.getName(), TextColors.GOLD, " is no longer AFK."));
-						}
-					}
-
-					EssentialCmds.afkList.remove(removeAFK);
-				}
-
-				AFK afk = new AFK(player, System.currentTimeMillis());
-				EssentialCmds.afkList.add(afk);
+				EssentialCmds.afkList.remove(removeAFK);
 			}
 		}
-	}
+		else
+		{
+			AFK removeAFK = null;
 
+			for (AFK a : EssentialCmds.afkList)
+			{
+				if (player.getUniqueId().equals(a.getPlayer().getUniqueId()))
+				{
+					removeAFK = a;
+					break;
+				}
+			}
+
+			if (removeAFK != null)
+			{
+				if (removeAFK.getAFK())
+				{
+					for (Player p : EssentialCmds.getEssentialCmds().getGame().getServer().getOnlinePlayers())
+					{
+						p.sendMessage(Text.of(TextColors.BLUE, player.getName(), TextColors.GOLD, " is no longer AFK."));
+					}
+				}
+
+				EssentialCmds.afkList.remove(removeAFK);
+			}
+
+			AFK afk = new AFK(player, System.currentTimeMillis());
+			EssentialCmds.afkList.add(afk);
+		}
+	}
 }

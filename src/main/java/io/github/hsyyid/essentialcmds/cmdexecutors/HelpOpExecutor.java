@@ -25,72 +25,57 @@
 package io.github.hsyyid.essentialcmds.cmdexecutors;
 
 import io.github.hsyyid.essentialcmds.internal.CommandExecutorBase;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
-import org.spongepowered.api.command.source.CommandBlockSource;
-import org.spongepowered.api.command.source.ConsoleSource;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
 import javax.annotation.Nonnull;
-import java.util.Optional;
 
-public class GetPosExecutor extends CommandExecutorBase
+public class HelpOpExecutor extends CommandExecutorBase
 {
 	public CommandResult execute(CommandSource src, CommandContext ctx) throws CommandException
 	{
-		Optional<Player> optionalPlayer = ctx.<Player> getOne("player");
-
-		if (!optionalPlayer.isPresent())
+		String question = ctx.<String> getOne("question").get();
+		
+		if (src instanceof Player)
 		{
-			if (src instanceof Player)
+			Player player = (Player) src;
+			
+			for(Player p : Sponge.getServer().getOnlinePlayers())
 			{
-				Player player = (Player) src;
-				player.sendMessage(Text.of(TextColors.GOLD, "Your current position is: ", TextColors.GRAY, player.getLocation().getX() + ", " + player.getLocation().getY() + ", " + player.getLocation().getZ()));
+				if(p.hasPermission("essentialcmds.helpop.receive"))
+					p.sendMessage(Text.of(TextColors.RED, "[Help-Op]: ", TextColors.GOLD, player.getName(), TextColors.GRAY, " needs help! ", TextColors.WHITE, question));
 			}
-			else if (src instanceof ConsoleSource)
-			{
-				src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Must be an in-game player to use /getpos!"));
-			}
-			else if (src instanceof CommandBlockSource)
-			{
-				src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Must be an in-game player to use /getpos!"));
-			}
-		}
-		else if (src.hasPermission("essentialscmds.getpos.others"))
-		{
-			Player player = optionalPlayer.get();
-			src.sendMessage(Text.of(TextColors.GOLD, player.getName() + "'s current position is: ", TextColors.GRAY, player.getLocation().getX() + ", " + player.getLocation().getY() + ", " + player.getLocation().getZ()));
 		}
 		else
 		{
-			src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "You don't have permission to get the positon of others!"));
+			src.sendMessage(Text.of(TextColors.DARK_RED, "Error! ", TextColors.RED, "Must be an in-game player to use /helpop!"));
 		}
-
+		
 		return CommandResult.success();
 	}
 
 	@Nonnull
 	@Override
-	public String[] getAliases()
-	{
-		return new String[] { "getpos" };
+	public String[] getAliases() {
+		return new String[] { "helpop" };
 	}
 
 	@Nonnull
 	@Override
-	public CommandSpec getSpec()
-	{
+	public CommandSpec getSpec() {
 		return CommandSpec.builder()
-			.description(Text.of("GetPos Command"))
-			.permission("essentialcmds.getpos.use")
-			.arguments(GenericArguments.optional(
-				GenericArguments.onlyOne(GenericArguments.player(Text.of("player")))))
-			.executor(this).build();
+			.description(Text.of("Help-Op Command"))
+			.arguments(GenericArguments.onlyOne(GenericArguments.remainingJoinedStrings(Text.of("question"))))
+			.permission("essentialcmds.helpop.use")
+			.executor(this)
+			.build();
 	}
 }
